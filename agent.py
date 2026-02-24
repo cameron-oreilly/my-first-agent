@@ -1,12 +1,10 @@
 from openai import OpenAI
+import json
 import os
 import platform
 import subprocess
-from dotenv import load_dotenv
-load_dotenv()
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+client = None
 context = []
 
 tools = [
@@ -28,6 +26,12 @@ tools = [
         "strict": True
     }
 ]
+
+
+def init(api_key: str):
+    global client, context
+    client = OpenAI(api_key=api_key)
+    context = []
 
 
 def ping(host: str) -> str:
@@ -65,7 +69,6 @@ def process(line):
         context.extend(response.output)
 
         for tc in tool_calls:
-            import json
             args = json.loads(tc.arguments)
             result = tool_map[tc.name](**args)
             context.append({"type": "function_call_output", "call_id": tc.call_id, "output": result})
@@ -76,8 +79,14 @@ def process(line):
     return response.output_text
 
 
-
 def main():
+    from dotenv import load_dotenv
+    load_dotenv()
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        print("Error: OPENAI_API_KEY not found in environment or .env file.")
+        return
+    init(api_key)
     while True:
         line = input("> ")
         result = process(line)

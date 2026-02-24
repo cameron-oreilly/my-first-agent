@@ -1,6 +1,6 @@
 # my-first-agent
 
-A minimal conversational AI agent powered by the OpenAI Responses API. The agent runs in a terminal loop, accepts natural language input, and can invoke local tools on your machine when needed.
+A minimal conversational AI agent powered by the OpenAI Responses API. It ships with a modern GUI (CustomTkinter) that can be packaged into a standalone Windows `.exe`, and also works as a plain terminal REPL.
 
 ## Requirements
 
@@ -9,23 +9,37 @@ A minimal conversational AI agent powered by the OpenAI Responses API. The agent
 
 ## Setup
 
-1. Install dependencies:
+Install dependencies:
 
-   ```bash
-   pip install openai python-dotenv
-   ```
+```bash
+pip install openai python-dotenv customtkinter
+```
 
-2. Create a `.env` file in the project root:
+## Usage
 
-   ```
-   OPENAI_API_KEY=your-key-here
-   ```
+### GUI (recommended)
 
-3. Run the agent:
+```bash
+python gui.py
+```
 
-   ```bash
-   python agent.py
-   ```
+On first launch you will be prompted for your OpenAI API key. The key is saved to `%APPDATA%/my-first-agent/config.json` so you only need to enter it once. You can update it later via the **Settings** button in the top-right corner.
+
+Type a message in the input bar and press **Enter** (or click **Send**). The agent responds in the chat area. A "Thinking..." indicator appears while the model is working.
+
+![my-first-agent GUI](image.png)
+
+### Terminal
+
+```bash
+python agent.py
+```
+
+Requires a `.env` file in the project root:
+
+```
+OPENAI_API_KEY=your-key-here
+```
 
 ## How It Works
 
@@ -36,15 +50,6 @@ User input  -->  Model  -->  Tool call?  --yes-->  Execute locally  -->  Model s
                                 \--no-->  Direct text response
 ```
 
-## Functions
-
-| Function | Description |
-|---|---|
-| `call()` | Sends the current conversation context and tool definitions to the OpenAI Responses API and returns the raw response. |
-| `process(line)` | Handles a single user turn: appends the message to context, calls the model, runs any requested tools in a loop, and returns the final text response. |
-| `ping(host)` | Executes the system `ping` command against a given hostname or IP address and returns the raw output. Works on both Windows and Unix. |
-| `main()` | Runs the interactive input loop, reading user input and printing model responses. |
-
 ## Tools
 
 The model can request the following tools during a conversation:
@@ -53,12 +58,29 @@ The model can request the following tools during a conversation:
 |---|---|---|
 | `ping` | `host` (string) — hostname or IP address | Pings a host on the internet (4 packets, 15 s timeout) and returns the output. The ping runs locally on your machine via `subprocess`. |
 
+## Building the Executable
+
+Install PyInstaller:
+
+```bash
+pip install pyinstaller
+```
+
+Build a single-file `.exe` (no console window):
+
+```bash
+pyinstaller --onefile --windowed --name my-first-agent --hidden-import openai --hidden-import customtkinter gui.py
+```
+
+The output binary will be at `dist/my-first-agent.exe`. Double-click it to launch the GUI.
+
 ## Project Structure
 
 ```
 my-first-agent/
-├── .env           # API key (git-ignored)
+├── .env           # API key for terminal mode (git-ignored)
 ├── .gitignore
-├── agent.py       # Agent source code
-└── README.md      # This file
+├── agent.py       # Agent core — importable module + terminal REPL
+├── gui.py         # CustomTkinter chat window + API key management
+└── README.md
 ```
